@@ -123,40 +123,60 @@ export default function GameCanvas() {
       setBestScore(parseInt(savedBestScore, 10));
     }
 
-    // 키보드 이벤트
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault();
-        if (gameRef.current) {
-          const status = gameRef.current.getStatus();
-          if (status === 'idle') {
-            gameRef.current.start();
-            lastTimeRef.current = performance.now();
-            animationFrameRef.current = requestAnimationFrame(gameLoop);
-          } else {
-            gameRef.current.jump();
-          }
-        }
-      }
-    };
-
-    // 마우스/터치 이벤트
-    const handleClick = () => {
+    // 게임 시작/점프 함수
+    const handleGameAction = () => {
       if (gameRef.current) {
         const status = gameRef.current.getStatus();
         if (status === 'idle') {
           gameRef.current.start();
           lastTimeRef.current = performance.now();
           animationFrameRef.current = requestAnimationFrame(gameLoop);
-        } else {
+        } else if (status === 'playing') {
           gameRef.current.jump();
         }
       }
     };
 
+    // 키보드 이벤트
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        handleGameAction();
+      }
+    };
+
+    // 마우스 클릭 이벤트
+    const handleClick = (e: MouseEvent) => {
+      e.preventDefault();
+      handleGameAction();
+    };
+
+    // 터치 이벤트 (모바일)
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleGameAction();
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // 이벤트 리스너 등록
     window.addEventListener('keydown', handleKeyPress);
     canvas.addEventListener('click', handleClick);
-    canvas.addEventListener('touchstart', handleClick);
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    
+    // 모바일에서 스크롤 방지
+    const preventScroll = (e: TouchEvent) => {
+      if (canvas.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+    
+    document.addEventListener('touchmove', preventScroll, { passive: false });
 
     // 초기 렌더링
     render(ctx);
@@ -164,7 +184,9 @@ export default function GameCanvas() {
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
       canvas.removeEventListener('click', handleClick);
-      canvas.removeEventListener('touchstart', handleClick);
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchmove', preventScroll);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -206,8 +228,15 @@ export default function GameCanvas() {
           ref={canvasRef}
           width={DEFAULT_CONFIG.canvasWidth}
           height={DEFAULT_CONFIG.canvasHeight}
-          className="border-2 border-gray-300 dark:border-gray-700 rounded-lg bg-sky-300 cursor-pointer"
-          style={{ maxWidth: '100%', height: 'auto' }}
+          className="border-2 border-gray-300 dark:border-gray-700 rounded-lg bg-sky-300 cursor-pointer touch-none select-none"
+          style={{ 
+            maxWidth: '100%', 
+            height: 'auto',
+            touchAction: 'none',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
+          }}
         />
         
         {/* 시작 화면 */}
@@ -215,8 +244,8 @@ export default function GameCanvas() {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 rounded-lg">
             <div className="text-white text-center p-6">
               <h2 className="text-3xl font-bold mb-4">플래피 버드</h2>
-              <p className="text-lg mb-2">클릭하거나 스페이스바를 눌러 시작하세요!</p>
-              <p className="text-sm">클릭/스페이스바: 점프</p>
+              <p className="text-lg mb-2">탭하거나 스페이스바를 눌러 시작하세요!</p>
+              <p className="text-sm">탭/클릭/스페이스바: 점프</p>
             </div>
           </div>
         )}
@@ -232,7 +261,8 @@ export default function GameCanvas() {
               )}
               <button
                 onClick={handleRestart}
-                className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold"
+                className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-bold touch-manipulation"
+                style={{ touchAction: 'manipulation' }}
               >
                 다시 시작
               </button>
@@ -243,7 +273,7 @@ export default function GameCanvas() {
 
       {/* 게임 설명 */}
       <div className="text-sm text-gray-600 dark:text-gray-400 text-center max-w-md">
-        <p>클릭 또는 스페이스바: 새를 위로 올리기</p>
+        <p>탭/클릭 또는 스페이스바: 새를 위로 올리기</p>
         <p>파이프를 피하며 최대한 많은 점수를 획득하세요!</p>
       </div>
     </div>
