@@ -107,6 +107,21 @@ export default function GameCanvas() {
     }
   }, [bestScore, render]);
 
+  // 게임 시작 함수
+  const startGame = useCallback(() => {
+    if (gameRef.current) {
+      const status = gameRef.current.getStatus();
+      if (status === 'idle') {
+        gameRef.current.start();
+        lastTimeRef.current = performance.now();
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+        animationFrameRef.current = requestAnimationFrame(gameLoop);
+      }
+    }
+  }, [gameLoop]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -128,9 +143,7 @@ export default function GameCanvas() {
       if (gameRef.current) {
         const status = gameRef.current.getStatus();
         if (status === 'idle') {
-          gameRef.current.start();
-          lastTimeRef.current = performance.now();
-          animationFrameRef.current = requestAnimationFrame(gameLoop);
+          startGame();
         } else if (status === 'playing') {
           gameRef.current.jump();
         }
@@ -191,7 +204,7 @@ export default function GameCanvas() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [gameLoop, render]);
+  }, [gameLoop, render, startGame]);
 
   const handleRestart = () => {
     if (gameRef.current) {
@@ -241,8 +254,21 @@ export default function GameCanvas() {
         
         {/* 시작 화면 */}
         {gameStatus === 'idle' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 rounded-lg">
-            <div className="text-white text-center p-6">
+          <div 
+            className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 rounded-lg"
+            style={{ touchAction: 'none', pointerEvents: 'auto', zIndex: 10 }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              startGame();
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              startGame();
+            }}
+          >
+            <div className="text-white text-center p-6 pointer-events-none">
               <h2 className="text-3xl font-bold mb-4">플래피 버드</h2>
               <p className="text-lg mb-2">탭하거나 스페이스바를 눌러 시작하세요!</p>
               <p className="text-sm">탭/클릭/스페이스바: 점프</p>
@@ -252,7 +278,10 @@ export default function GameCanvas() {
 
         {/* 게임 오버 화면 */}
         {gameStatus === 'gameover' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 rounded-lg">
+          <div 
+            className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 rounded-lg"
+            style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
+          >
             <div className="text-white text-center p-6">
               <h2 className="text-3xl font-bold mb-4 text-red-400">게임 오버!</h2>
               <p className="text-xl mb-2">최종 점수: {score}</p>
@@ -261,7 +290,12 @@ export default function GameCanvas() {
               )}
               <button
                 onClick={handleRestart}
-                className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-bold touch-manipulation"
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleRestart();
+                }}
+                className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-bold touch-manipulation min-h-[44px] min-w-[120px]"
                 style={{ touchAction: 'manipulation' }}
               >
                 다시 시작
