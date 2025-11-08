@@ -28,3 +28,34 @@ export type MinesweeperConfig = {
   mines: number;
 };
 
+// 플래피 버드 관련 타입
+export type FlappyBirdGameStatus = 'idle' | 'playing' | 'gameover';
+
+export type Bird = {
+  x: number;
+  y: number;
+  velocity: number;
+  width: number;
+  height: number;
+};
+
+export type Pipe = {
+  x: number;
+  topHeight: number;
+  bottomY: number;
+  width: number;
+  gap: number;
+  passed: boolean;
+};
+
+export type FlappyBirdConfig = {
+  canvasWidth: number;
+  canvasHeight: number;
+  gravity: number;
+  jumpStrength: number;
+  pipeSpeed: number;
+  pipeWidth: number;
+  pipeGap: number;
+  pipeSpawnInterval: number;
+};
+

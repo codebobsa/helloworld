@@ -8,6 +8,12 @@ const games: GameInfo[] = [
     description: '클릭하여 지뢰를 피하고 모든 안전한 셀을 열어보세요!',
     path: '/games/minesweeper',
   },
+  {
+    id: 'flappy-bird',
+    name: '플래피 버드',
+    description: '클릭하거나 스페이스바를 눌러 새를 조종하고 파이프를 피하세요!',
+    path: '/games/flappy-bird',
+  },
 ];
 
 export default function Home() {
